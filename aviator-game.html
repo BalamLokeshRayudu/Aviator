@@ -1,1 +1,356 @@
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Aviator-Style Game</title>
+  <style>
+    /* Reset and base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+      -webkit-tap-highlight-color: transparent;
+      user-select:none;
+    }
+    h1 {
+      margin-bottom: 10px;
+      font-weight: 700;
+      font-size: 2.4rem;
+      text-shadow: 0 0 8px #fff5, 0 0 15px #4fc3f7;
+    }
 
+    #game-container {
+      width: 320px;
+      max-width: 100%;
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 0 8px #1f8ef1aa, 0 0 25px #1976d2aa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select:none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #plane-area {
+      position: relative;
+      width: 280px;
+      height: 180px;
+      margin-bottom: 20px;
+      border: 2px solid #4fc3f7;
+      border-radius: 15px;
+      background: linear-gradient(90deg, #04284e, #0f4c81);
+      box-shadow: 0 0 8px #1f8ef1fa inset;
+    }
+
+    #plane {
+      position: absolute;
+      left: 10px;
+      bottom: 30px;
+      width: 48px;
+      height: 48px;
+      background: url('https://images.pexels.com/photos/3583204/pexels-photo-3583204.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=48') no-repeat center/contain;
+      filter: drop-shadow(0 0 2px #00aef3);
+      animation: plane-hover 1.5s ease-in-out infinite;
+      transition: left 0.1s linear;
+      user-select:none;
+      pointer-events:none;
+    }
+
+    @keyframes plane-hover {
+      0%, 100% { transform: translateY(0) rotate(3deg);}
+      50% { transform: translateY(-8px) rotate(-3deg);}
+    }
+
+    #multiplier-display {
+      font-size: 3.4rem;
+      font-weight: 800;
+      color: #06d6a0;
+      text-shadow: 0 0 8px #06d6a0bb;
+      margin-bottom: 15px;
+      user-select:none;
+    }
+
+    #messages {
+      height: 24px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #f44336;
+      text-align: center;
+      min-height: 1.2rem;
+      user-select:none;
+    }
+
+    #buttons {
+      display: flex;
+      gap: 15px;
+      width: 100%;
+      justify-content: center;
+      user-select:none;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #f0f0f0;
+      background: #0288d1;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px #0288d1cc;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      user-select:none;
+      outline:none;
+    }
+    button:disabled {
+      background: #555a66;
+      box-shadow: none;
+      cursor: default;
+    }
+    button#cashout-btn {
+      background: #06d6a0;
+      box-shadow: 0 4px 15px #06d6a0cc;
+    }
+    button#cashout-btn:disabled {
+      background: #4caf50aa;
+      box-shadow: none;
+    }
+    button:hover:not(:disabled) {
+      background: #005b8f;
+      box-shadow: 0 6px 15px #005b8fbb;
+    }
+    button#cashout-btn:hover:not(:disabled) {
+      background: #018749;
+      box-shadow: 0 6px 20px #018749cc;
+    }
+
+    #win-log {
+      margin-top: 24px;
+      width: 100%;
+      max-height: 160px;
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      color: #e0f2f1;
+      box-shadow: inset 0 0 12px #018749cc;
+      user-select:none;
+      font-family: monospace;
+      line-height: 1.3;
+    }
+
+    /* Scrollbar for logs */
+    #win-log::-webkit-scrollbar {
+      width: 6px;
+    }
+    #win-log::-webkit-scrollbar-thumb {
+      background-color: #06d6a0cc;
+      border-radius: 3px;
+    }
+
+    /* Responsive for small screens */
+    @media (max-width: 400px) {
+      #game-container {
+        width: 95vw;
+        padding: 16px;
+      }
+      #plane-area {
+        width: 100%;
+        height: 140px;
+      }
+      #multiplier-display {
+        font-size: 2.8rem;
+      }
+      button {
+        font-size: 1.05rem;
+        padding: 10px 0;
+      }
+    }
+    @media (max-height: 600px) {
+      body {
+        padding: 12px 8px 10px;
+      }
+      #plane-area {
+        height: 130px;
+      }
+      #multiplier-display {
+        font-size: 2.6rem;
+      }
+      #win-log {
+        max-height: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Aviator-Style Game</h1>
+  <div id="game-container" role="main" aria-label="Aviator style multiplier game">
+    <div id="plane-area" aria-live="polite" aria-atomic="true">
+      <div id="plane" aria-hidden="true"></div>
+    </div>
+    <div id="multiplier-display" aria-atomic="true" aria-live="polite" aria-relevant="text">1.00x</div>
+    <div id="messages" role="alert" aria-live="assertive"></div>
+    <div id="buttons">
+      <button id="start-btn" aria-label="Start the game">Start</button>
+      <button id="cashout-btn" aria-label="Cash out current multiplier" disabled>Cash Out</button>
+    </div>
+    <div id="win-log" aria-label="Win log, latest wins appear here" tabindex="0"></div>
+  </div>
+
+  <audio id="sound-crash" src="https://assets.codepen.io/3/metallic_flip_crash.mp3" preload="auto"></audio>
+  <audio id="sound-cashout" src="https://assets.codepen.io/3/coin-sound.mp3" preload="auto"></audio>
+  <audio id="sound-start" src="https://assets.codepen.io/3/start_sound.mp3" preload="auto"></audio>
+
+  <script>
+    (function(){
+      const startBtn = document.getElementById('start-btn');
+      const cashoutBtn = document.getElementById('cashout-btn');
+      const multiplierDisplay = document.getElementById('multiplier-display');
+      const messages = document.getElementById('messages');
+      const winLog = document.getElementById('win-log');
+      const plane = document.getElementById('plane');
+
+      const soundCrash = document.getElementById('sound-crash');
+      const soundCashout = document.getElementById('sound-cashout');
+      const soundStart = document.getElementById('sound-start');
+
+      let multiplier = 1.00;
+      let crashMultiplier = 0;
+      let intervalId = null;
+      let running = false;
+      let cashedOut = false;
+
+      // Sound play helper with catch to prevent error on no user interaction
+      function playSound(sound) {
+        try {
+          sound.currentTime = 0;
+          sound.play();
+        } catch(e){}
+      }
+
+      function resetGame(){
+        multiplier = 1.00;
+        crashMultiplier = (Math.random() * 10) + 1.2; // Crash between 1.2x and 11.2x approx
+        cashedOut = false;
+        multiplierDisplay.textContent = multiplier.toFixed(2) + 'x';
+        messages.textContent = '';
+        cashoutBtn.disabled = true;
+        startBtn.disabled = false;
+        plane.style.left = '10px';
+        running = false;
+      }
+
+      function animatePlane(multiplierValue){
+        // The plane moves from left to right based on multiplierValue,
+        // with max right at crashMultiplier or 280px max width
+        // We map the multiplierValue (1 to crashMultiplier) to x (10px to 230px)
+        const maxRange = 230; // max left pixel for plane inside container
+        const progress = Math.min((multiplierValue - 1) / (crashMultiplier - 1), 1);
+        const posX = 10 + progress * maxRange;
+        plane.style.left = posX + 'px';
+      }
+
+      function startGame(){
+        resetGame();
+        running = true;
+        startBtn.disabled = true;
+        cashoutBtn.disabled = false;
+        playSound(soundStart);
+
+        let lastTimestamp = Date.now();
+
+        intervalId = setInterval(() => {
+          if(!running) return;
+
+          // Increase multiplier every 100ms by 0.01
+          // Using time delta for accuracy
+          const now = Date.now();
+          let elapsed = now - lastTimestamp;
+          lastTimestamp = now;
+          multiplier += 0.01 * (elapsed / 100);
+          multiplierDisplay.textContent = multiplier.toFixed(2) + 'x';
+
+          animatePlane(multiplier);
+
+          if(multiplier >= crashMultiplier){
+            // Crash!
+            running = false;
+            clearInterval(intervalId);
+            intervalId = null;
+            cashoutBtn.disabled = true;
+            startBtn.disabled = false;
+            multiplierDisplay.textContent = crashMultiplier.toFixed(2) + 'x';
+            messages.textContent = '💥 Crash! You lost!';
+            plane.style.filter = 'drop-shadow(0 0 6px #f44336)';
+            playSound(soundCrash);
+          }
+        }, 100);
+      }
+
+      function cashOut(){
+        if(!running || cashedOut) return;
+        cashedOut = true;
+        running = false;
+        clearInterval(intervalId);
+        intervalId = null;
+        cashoutBtn.disabled = true;
+        startBtn.disabled = false;
+        messages.textContent = '💸 Cashed out at ' + multiplier.toFixed(2) + 'x! You won!';
+        plane.style.filter = 'drop-shadow(0 0 6px #06d6a0)';
+        playSound(soundCashout);
+        addWinLog(multiplier.toFixed(2));
+      }
+
+      function addWinLog(cashoutMultiplier){
+        const timeString = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.textContent = `[${timeString}] Cashed out at x${cashoutMultiplier}`;
+        winLog.prepend(entry);
+      }
+
+      startBtn.addEventListener('click', () => {
+        if(!running) {
+          messages.textContent = '';
+          plane.style.filter = 'drop-shadow(0 0 2px #00aef3)';
+          startGame();
+        }
+      });
+
+      cashoutBtn.addEventListener('click', () => {
+        cashOut();
+      });
+
+      // Reset at page load
+      resetGame();
+
+      // Accessibility: Allow keyboard interaction for buttons
+      startBtn.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startBtn.click(); }
+      });
+      cashoutBtn.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cashoutBtn.click(); }
+      });
+    })();
+  </script>
+</body>
+</html>
+```
